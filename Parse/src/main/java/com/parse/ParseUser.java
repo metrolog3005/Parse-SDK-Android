@@ -1093,7 +1093,11 @@ public class ParseUser extends ParseObject {
     }
   }
 
-  /* package */ Task<Void> unlinkFromAsync(final String authType) {
+  /* package */ Task<Void> unlinkFromAsync(ParseAuthenticationProvider provider) {
+    return unlinkFromAsync(provider.getAuthType());
+  }
+
+  private Task<Void> unlinkFromAsync(final String authType) {
     synchronized (mutex) {
       if (authType == null) {
         return Task.forResult(null);
@@ -1118,7 +1122,8 @@ public class ParseUser extends ParseObject {
   }
 
   /* package */ static Task<ParseUser> logInWithAsync(
-      final String authType, final Map<String, String> authData) {
+      final ParseAuthenticationProvider provider, final Map<String, String> authData) {
+    final String authType = provider.getAuthType();
     final Continuation<Void, Task<ParseUser>> logInWithTask = new Continuation<Void, Task<ParseUser>>() {
       @Override
       public Task<ParseUser> then(Task<Void> task) throws Exception {
@@ -1186,7 +1191,7 @@ public class ParseUser extends ParseObject {
                 // to that third party user, then we'll just create a new user and link it with the
                 // third party user. New users will not be linked to the previous user's data.
                 return user.linkWithAsync(
-                    authType, authData, user.getSessionToken()
+                    provider, authData, user.getSessionToken()
                 ).continueWithTask(new Continuation<Void, Task<ParseUser>>() {
                   @Override
                   public Task<ParseUser> then(Task<Void> task) throws Exception {
@@ -1215,10 +1220,11 @@ public class ParseUser extends ParseObject {
   }
 
   private Task<Void> linkWithAsync(
-      final String authType,
+      ParseAuthenticationProvider provider,
       final Map<String, String> authData,
       final Task<Void> toAwait,
       final String sessionToken) {
+    final String authType = provider.getAuthType();
     synchronized (mutex) {
       final boolean isLazy = isLazy();
       final Map<String, String> oldAnonymousData = getAuthData(ParseAnonymousUtils.AUTH_TYPE);
@@ -1242,14 +1248,21 @@ public class ParseUser extends ParseObject {
     }
   }
 
-  /* package */ Task<Void> linkWithAsync(
-      final String authType, final Map<String, String> authData, final String sessionToken) {
+  private Task<Void> linkWithAsync(
+      final ParseAuthenticationProvider provider,
+      final Map<String, String> authData,
+      final String sessionToken) {
     return taskQueue.enqueue(new Continuation<Void, Task<Void>>() {
       @Override
       public Task<Void> then(Task<Void> task) throws Exception {
-        return linkWithAsync(authType, authData, task, sessionToken);
+        return linkWithAsync(provider, authData, task, sessionToken);
       }
     });
+  }
+
+  /* package */ Task<Void> linkWithAsync(
+      ParseAuthenticationProvider provider, Map<String, String> authData) {
+    return linkWithAsync(provider, authData, getSessionToken());
   }
 
   //endregion
