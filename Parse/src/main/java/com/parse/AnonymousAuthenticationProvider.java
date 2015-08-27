@@ -32,8 +32,9 @@ import bolts.Task;
   }
 
   @Override
-  public void deauthenticate() {
+  public Task<Void> deauthenticateAsync() {
     // do nothing
+    return Task.forResult(null);
   }
 
   @Override

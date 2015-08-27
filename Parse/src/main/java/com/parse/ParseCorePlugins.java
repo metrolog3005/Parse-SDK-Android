@@ -35,6 +35,9 @@ import java.util.concurrent.atomic.AtomicReference;
   private AtomicReference<ParseCurrentInstallationController> currentInstallationController =
       new AtomicReference<>();
 
+  private AtomicReference<ParseAuthenticationController> authenticationController =
+      new AtomicReference<>();
+
   private AtomicReference<ParseQueryController> queryController = new AtomicReference<>();
   private AtomicReference<ParseFileController> fileController = new AtomicReference<>();
   private AtomicReference<ParseAnalyticsController> analyticsController = new AtomicReference<>();
@@ -58,6 +61,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
     currentUserController.set(null);
     currentInstallationController.set(null);
+
+    authenticationController.set(null);
 
     queryController.set(null);
     fileController.set(null);
@@ -283,6 +288,14 @@ import java.util.concurrent.atomic.AtomicReference;
           "Another currentInstallation controller was already registered: " +
               currentInstallationController.get());
     }
+  }
+
+  public ParseAuthenticationController getAuthenticationController() {
+    if (authenticationController.get() == null) {
+      ParseAuthenticationController controller = new ParseAuthenticationController();
+      authenticationController.compareAndSet(null, controller);
+    }
+    return authenticationController.get();
   }
 
   public ParseDefaultACLController getDefaultACLController() {

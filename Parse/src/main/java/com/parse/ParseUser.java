@@ -10,6 +10,7 @@ package com.parse;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,8 +38,6 @@ public class ParseUser extends ParseObject {
   private static final List<String> READ_ONLY_KEYS = Collections.unmodifiableList(
       Arrays.asList(KEY_SESSION_TOKEN, KEY_AUTH_DATA));
 
-  private static Map<String, ParseAuthenticationProvider> authenticationProviders = new HashMap<>();
-
   /**
    * Constructs a query for {@code ParseUser}.
    *
@@ -54,6 +53,10 @@ public class ParseUser extends ParseObject {
 
   /* package for tests */ static ParseCurrentUserController getCurrentUserController() {
     return ParseCorePlugins.getInstance().getCurrentUserController();
+  }
+
+  /* package for tests */ static ParseAuthenticationController getAuthenticationController() {
+    return ParseCorePlugins.getInstance().getAuthenticationController();
   }
 
   /** package */ static class State extends ParseObject.State {
@@ -245,6 +248,7 @@ public class ParseUser extends ParseObject {
   }
 
   /* package for tests */ void cleanUpAuthData() {
+    ParseAuthenticationController controller = getAuthenticationController();
     synchronized (mutex) {
       Map<String, Map<String, String>> authData = getState().authData();
       if (authData.size() == 0) {
@@ -256,9 +260,7 @@ public class ParseUser extends ParseObject {
         Map.Entry<String, Map<String, String>> entry = i.next();
         if (entry.getValue() == null) {
           i.remove();
-          if (authenticationProviders.containsKey(entry.getKey())) {
-            authenticationProviders.get(entry.getKey()).restoreAuthentication(null);
-          }
+          controller.restoreAuthentication(entry.getKey(), null);
         }
       }
 
@@ -971,17 +973,19 @@ public class ParseUser extends ParseObject {
 
   //TODO (grantland): Add to taskQueue
   /* package */ Task<Void> logOutAsync() {
-    String oldSessionToken = logOutInternal();
-    return ParseSession.revokeAsync(oldSessionToken);
+    return logOutAsync(true);
   }
 
-  /* package */ String logOutInternal() {
-    String oldSessionToken;
+  /* package */ Task<Void> logOutAsync(boolean revoke) {
+    ParseAuthenticationController controller = getAuthenticationController();
+    List<Task<Void>> tasks = new ArrayList<>();
+    final String oldSessionToken;
+
     synchronized (mutex) {
       oldSessionToken = getState().sessionToken();
 
       for (Map.Entry<String, Map<String, String>> entry : getAuthData().entrySet()) {
-        logOutWith(entry.getKey());
+        tasks.add(controller.deauthenticateAsync(entry.getKey()));
       }
 
       State newState = getState().newBuilder()
@@ -991,7 +995,12 @@ public class ParseUser extends ParseObject {
       isCurrentUser = false;
       setState(newState);
     }
-    return oldSessionToken;
+
+    if (revoke) {
+      tasks.add(ParseSession.revokeAsync(oldSessionToken));
+    }
+
+    return Task.whenAll(tasks);
   }
 
   /**
@@ -1059,23 +1068,13 @@ public class ParseUser extends ParseObject {
     return authData.containsKey(authType) && authData.get(authType) != null;
   }
 
-  private void synchronizeAuthData(String authType) {
+  /* package */ void synchronizeAuthData(String authType) {
     synchronized (mutex) {
       if (!this.isCurrentUser()) {
         return;
       }
-      ParseAuthenticationProvider provider = authenticationProviders.get(authType);
-      if (provider == null) {
-        return;
-      }
-      synchronizeAuthData(provider);
-    }
-  }
-
-  /* package */ void synchronizeAuthData(ParseAuthenticationProvider provider) {
-    synchronized (mutex) {
-      String authType = provider.getAuthType();
-      boolean success = provider.restoreAuthentication(getAuthData(authType));
+      boolean success = getAuthenticationController()
+          .restoreAuthentication(authType, getAuthData(authType));
       if (!success) {
         unlinkFromAsync(authType);
       }
@@ -1115,19 +1114,7 @@ public class ParseUser extends ParseObject {
   }
 
   /* package */ static void registerAuthenticationProvider(ParseAuthenticationProvider provider) {
-    authenticationProviders.put(provider.getAuthType(), provider);
-
-    if (provider instanceof AnonymousAuthenticationProvider) {
-      // There's nothing to synchronize
-      return;
-    }
-
-    // Synchronize the current user with the auth provider.
-    //TODO (grantland): Possible disk I/O on main thread
-    ParseUser user = getCurrentUser();
-    if (user != null) {
-      user.synchronizeAuthData(provider);
-    }
+    getAuthenticationController().register(provider);
   }
 
   /* package */ static Task<ParseUser> logInWithAsync(
@@ -1263,15 +1250,6 @@ public class ParseUser extends ParseObject {
         return linkWithAsync(authType, authData, task, sessionToken);
       }
     });
-  }
-
-  private void logOutWith(String authType) {
-    synchronized (mutex) {
-      ParseAuthenticationProvider provider = authenticationProviders.get(authType);
-      if (provider != null && isLinked(authType)) {
-        provider.deauthenticate();
-      }
-    }
   }
 
   //endregion

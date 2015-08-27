@@ -36,7 +36,7 @@ import bolts.Task;
    * Deauthenticates (logs out) the user associated with this provider. This
    * call may block.
    */
-  public abstract void deauthenticate();
+  public abstract Task<Void> deauthenticateAsync();
 
   /**
    * Restores authentication that has been serialized, such as session keys,
