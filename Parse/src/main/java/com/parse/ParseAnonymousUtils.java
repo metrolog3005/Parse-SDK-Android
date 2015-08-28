@@ -69,7 +69,7 @@ public final class ParseAnonymousUtils {
     return provider.authenticateAsync().onSuccessTask(new Continuation<Map<String, String>, Task<ParseUser>>() {
       @Override
       public Task<ParseUser> then(Task<Map<String, String>> task) throws Exception {
-        return ParseUser.logInWithAsync(provider, task.getResult());
+        return ParseUser.logInWithAsync(provider.getAuthType(), task.getResult());
       }
     });
   }

@@ -1122,8 +1122,7 @@ public class ParseUser extends ParseObject {
   }
 
   /* package */ static Task<ParseUser> logInWithAsync(
-      final ParseAuthenticationProvider provider, final Map<String, String> authData) {
-    final String authType = provider.getAuthType();
+      final String authType, final Map<String, String> authData) {
     final Continuation<Void, Task<ParseUser>> logInWithTask = new Continuation<Void, Task<ParseUser>>() {
       @Override
       public Task<ParseUser> then(Task<Void> task) throws Exception {
@@ -1190,7 +1189,7 @@ public class ParseUser extends ParseObject {
                 // Try to link the current user with third party user, unless a user is already linked
                 // to that third party user, then we'll just create a new user and link it with the
                 // third party user. New users will not be linked to the previous user's data.
-                return user.linkWithAsync(provider, authData).continueWithTask(new Continuation<Void, Task<ParseUser>>() {
+                return user.linkWithAsync(authType, authData).continueWithTask(new Continuation<Void, Task<ParseUser>>() {
                   @Override
                   public Task<ParseUser> then(Task<Void> task) throws Exception {
                     if (task.isFaulted()) {
@@ -1218,11 +1217,10 @@ public class ParseUser extends ParseObject {
   }
 
   private Task<Void> linkWithAsync(
-      ParseAuthenticationProvider provider,
+      final String authType,
       final Map<String, String> authData,
       final Task<Void> toAwait,
       final String sessionToken) {
-    final String authType = provider.getAuthType();
     synchronized (mutex) {
       final boolean isLazy = isLazy();
       final Map<String, String> oldAnonymousData = getAuthData(ParseAnonymousUtils.AUTH_TYPE);
@@ -1247,20 +1245,20 @@ public class ParseUser extends ParseObject {
   }
 
   private Task<Void> linkWithAsync(
-      final ParseAuthenticationProvider provider,
+      final String authType,
       final Map<String, String> authData,
       final String sessionToken) {
     return taskQueue.enqueue(new Continuation<Void, Task<Void>>() {
       @Override
       public Task<Void> then(Task<Void> task) throws Exception {
-        return linkWithAsync(provider, authData, task, sessionToken);
+        return linkWithAsync(authType, authData, task, sessionToken);
       }
     });
   }
 
   /* package */ Task<Void> linkWithAsync(
-      ParseAuthenticationProvider provider, Map<String, String> authData) {
-    return linkWithAsync(provider, authData, getSessionToken());
+      String authType, Map<String, String> authData) {
+    return linkWithAsync(authType, authData, getSessionToken());
   }
 
   //endregion
