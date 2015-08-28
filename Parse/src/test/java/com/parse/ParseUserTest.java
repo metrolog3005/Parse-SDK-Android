@@ -399,11 +399,9 @@ public class ParseUserTest {
     ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
 
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("token", "123");
-    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(provider, authData));
+    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(authType, authData));
 
     // Make sure we stripAnonymity
     assertNull(userAfterLogin.getAuthData().get(ParseAnonymousUtils.AUTH_TYPE));
@@ -430,12 +428,10 @@ public class ParseUserTest {
     ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
 
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("token", "123");
 
-    Task<ParseUser> loginTask = ParseUser.logInWithAsync(provider, authData);
+    Task<ParseUser> loginTask = ParseUser.logInWithAsync(authType, authData);
     loginTask.waitForCompletion();
 
     // Make sure we try to resolveLaziness
@@ -460,7 +456,7 @@ public class ParseUserTest {
     ParseUser partialMockCurrentUser = spy(currentUser); // ParseUser.mutex
     doReturn(Task.<Void>forResult(null))
         .when(partialMockCurrentUser)
-        .linkWithAsync(any(ParseAuthenticationProvider.class), Matchers.<Map<String, String>>any());
+        .linkWithAsync(anyString(), Matchers.<Map<String, String>>any());
     ParseCurrentUserController currentUserController = mock(ParseCurrentUserController.class);
     when(currentUserController.getAsync()).thenReturn(Task.forResult(partialMockCurrentUser));
     when(currentUserController.getAsync(anyBoolean()))
@@ -468,15 +464,13 @@ public class ParseUserTest {
     ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
 
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("token", "123");
 
-    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(provider, authData));
+    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(authType, authData));
 
     // Make sure we link authData
-    verify(partialMockCurrentUser, times(1)).linkWithAsync(provider, authData);
+    verify(partialMockCurrentUser, times(1)).linkWithAsync(authType, authData);
     assertSame(partialMockCurrentUser, userAfterLogin);
   }
 
@@ -501,7 +495,7 @@ public class ParseUserTest {
         new ParseException(ParseException.ACCOUNT_ALREADY_LINKED, "Account already linked");
     doReturn(Task.<Void>forError(linkException))
         .when(partialMockCurrentUser)
-        .linkWithAsync(any(ParseAuthenticationProvider.class), Matchers.<Map<String, String>>any());
+        .linkWithAsync(anyString(), Matchers.<Map<String, String>>any());
     ParseCurrentUserController currentUserController = mock(ParseCurrentUserController.class);
     when(currentUserController.getAsync()).thenReturn(Task.forResult(partialMockCurrentUser));
     when(currentUserController.setAsync(any(ParseUser.class)))
@@ -510,14 +504,12 @@ public class ParseUserTest {
 
 
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("token", "123");
-    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(provider, authData));
+    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(authType, authData));
 
     // Make sure we link authData
-    verify(partialMockCurrentUser, times(1)).linkWithAsync( provider, authData);
+    verify(partialMockCurrentUser, times(1)).linkWithAsync(authType, authData);
     // Make sure we login authData
     verify(userController, times(1)).logInAsync("facebook", authData);
     // Make sure we save the new created user as currentUser
@@ -546,12 +538,10 @@ public class ParseUserTest {
     ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
 
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("token", "123");
 
-    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(provider, authData));
+    ParseUser userAfterLogin = ParseTaskUtils.wait(ParseUser.logInWithAsync(authType, authData));
 
     // Make sure we login authData
     verify(userController, times(1)).logInAsync("facebook", authData);
@@ -596,7 +586,7 @@ public class ParseUserTest {
     Map<String, String> authData = new HashMap<>();
     authData.put("token", "test");
 
-    ParseTaskUtils.wait(partialMockUser.linkWithAsync(provider, authData));
+    ParseTaskUtils.wait(partialMockUser.linkWithAsync(provider.getAuthType(), authData));
 
     // Make sure we stripAnonymity
     assertNull(partialMockUser.getAuthData().get(ParseAnonymousUtils.AUTH_TYPE));
@@ -632,13 +622,11 @@ public class ParseUserTest {
         .when(partialMockUser)
         .getSessionToken();
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("facebookToken", "facebookTest");
 
     Task<Void> linkTask =
-        partialMockUser.linkWithAsync(provider, authData);
+        partialMockUser.linkWithAsync(authType, authData);
     linkTask.waitForCompletion();
 
     // Make sure new authData is added
