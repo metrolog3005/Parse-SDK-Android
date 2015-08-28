@@ -10,11 +10,8 @@ package com.parse;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,7 +65,7 @@ public class CachedCurrentUserControllerTest {
     ParseTaskUtils.wait(controller.setAsync(currentUser));
 
     // Make sure oldCurrentUser logout
-    verify(oldCurrentUser, times(1)).logOutInternal();
+    verify(oldCurrentUser, times(1)).logOutAsync(false);
     // Verify it was persisted
     verify(store, times(1)).setAsync(currentUser);
     // TODO(mengyan): Find a way to verify user.synchronizeAllAuthData() is called
@@ -122,7 +119,7 @@ public class CachedCurrentUserControllerTest {
     ParseTaskUtils.wait(controller.setAsync(currentUser));
 
     // Make sure oldCurrentUser logout
-    verify(oldCurrentUser, times(1)).logOutInternal();
+    verify(oldCurrentUser, times(1)).logOutAsync(false);
     // Verify we tried to persist
     verify(store, times(1)).setAsync(currentUser);
     // TODO(mengyan): Find a way to verify user.synchronizeAllAuthData() is called

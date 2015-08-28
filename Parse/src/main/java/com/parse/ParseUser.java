@@ -1070,7 +1070,7 @@ public class ParseUser extends ParseObject {
 
   /* package */ void synchronizeAuthData(String authType) {
     synchronized (mutex) {
-      if (!this.isCurrentUser()) {
+      if (!isCurrentUser()) {
         return;
       }
       boolean success = getAuthenticationController()
@@ -1190,9 +1190,7 @@ public class ParseUser extends ParseObject {
                 // Try to link the current user with third party user, unless a user is already linked
                 // to that third party user, then we'll just create a new user and link it with the
                 // third party user. New users will not be linked to the previous user's data.
-                return user.linkWithAsync(
-                    provider, authData, user.getSessionToken()
-                ).continueWithTask(new Continuation<Void, Task<ParseUser>>() {
+                return user.linkWithAsync(provider, authData).continueWithTask(new Continuation<Void, Task<ParseUser>>() {
                   @Override
                   public Task<ParseUser> then(Task<Void> task) throws Exception {
                     if (task.isFaulted()) {
