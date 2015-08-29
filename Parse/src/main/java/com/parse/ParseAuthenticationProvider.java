@@ -10,7 +10,6 @@ package com.parse;
 
 import java.util.Map;
 
-import bolts.Continuation;
 import bolts.Task;
 
 /**

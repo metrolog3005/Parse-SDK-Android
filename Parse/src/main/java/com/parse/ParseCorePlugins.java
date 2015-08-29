@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
   private AtomicReference<ParseCurrentInstallationController> currentInstallationController =
       new AtomicReference<>();
 
-  private AtomicReference<ParseAuthenticationController> authenticationController =
+  private AtomicReference<ParseAuthenticationManager> authenticationController =
       new AtomicReference<>();
 
   private AtomicReference<ParseQueryController> queryController = new AtomicReference<>();
@@ -290,9 +290,10 @@ import java.util.concurrent.atomic.AtomicReference;
     }
   }
 
-  public ParseAuthenticationController getAuthenticationController() {
+  public ParseAuthenticationManager getAuthenticationManager() {
     if (authenticationController.get() == null) {
-      ParseAuthenticationController controller = new ParseAuthenticationController();
+      ParseAuthenticationManager controller =
+          new ParseAuthenticationManager(getCurrentUserController());
       authenticationController.compareAndSet(null, controller);
     }
     return authenticationController.get();

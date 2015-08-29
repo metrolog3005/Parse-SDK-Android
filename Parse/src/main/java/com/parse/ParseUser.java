@@ -55,8 +55,8 @@ public class ParseUser extends ParseObject {
     return ParseCorePlugins.getInstance().getCurrentUserController();
   }
 
-  /* package for tests */ static ParseAuthenticationController getAuthenticationController() {
-    return ParseCorePlugins.getInstance().getAuthenticationController();
+  /* package for tests */ static ParseAuthenticationManager getAuthenticationManager() {
+    return ParseCorePlugins.getInstance().getAuthenticationManager();
   }
 
   /** package */ static class State extends ParseObject.State {
@@ -248,7 +248,7 @@ public class ParseUser extends ParseObject {
   }
 
   /* package for tests */ void cleanUpAuthData() {
-    ParseAuthenticationController controller = getAuthenticationController();
+    ParseAuthenticationManager controller = getAuthenticationManager();
     synchronized (mutex) {
       Map<String, Map<String, String>> authData = getState().authData();
       if (authData.size() == 0) {
@@ -977,7 +977,7 @@ public class ParseUser extends ParseObject {
   }
 
   /* package */ Task<Void> logOutAsync(boolean revoke) {
-    ParseAuthenticationController controller = getAuthenticationController();
+    ParseAuthenticationManager controller = getAuthenticationManager();
     List<Task<Void>> tasks = new ArrayList<>();
     final String oldSessionToken;
 
@@ -1073,7 +1073,7 @@ public class ParseUser extends ParseObject {
       if (!isCurrentUser()) {
         return;
       }
-      boolean success = getAuthenticationController()
+      boolean success = getAuthenticationManager()
           .restoreAuthentication(authType, getAuthData(authType));
       if (!success) {
         unlinkFromAsync(authType);
@@ -1118,7 +1118,7 @@ public class ParseUser extends ParseObject {
   }
 
   /* package */ static void registerAuthenticationProvider(ParseAuthenticationProvider provider) {
-    getAuthenticationController().register(provider);
+    getAuthenticationManager().register(provider);
   }
 
   /* package */ static Task<ParseUser> logInWithAsync(
