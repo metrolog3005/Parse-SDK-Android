@@ -897,6 +897,9 @@ public class ParseUserTest {
     NetworkSessionController sessionController = mock(NetworkSessionController.class);
     when(sessionController.revokeAsync(anyString())).thenReturn(Task.<Void>forResult(null));
     ParseCorePlugins.getInstance().registerSessionController(sessionController);
+    ParseAuthenticationManager manager = mock(ParseAuthenticationManager.class);
+    when(manager.deauthenticateAsync(anyString())).thenReturn(Task.<Void>forResult(null));
+    ParseCorePlugins.getInstance().registerAuthenticationManager(manager);
 
     // Set user initial state
     String facebookAuthType = "facebook";
@@ -911,6 +914,7 @@ public class ParseUserTest {
 
     ParseTaskUtils.wait(user.logOutAsync());
 
+    verify(manager).deauthenticateAsync("facebook");
     // Verify we revoke session
     verify(sessionController, times(1)).revokeAsync("r:oldSessionToken");
   }
@@ -1032,8 +1036,6 @@ public class ParseUserTest {
 
     // Set user initial state
     String authType = "facebook";
-    ParseAuthenticationProvider provider = mock(ParseAuthenticationProvider.class);
-    when(provider.getAuthType()).thenReturn(authType);
     Map<String, String> authData = new HashMap<>();
     authData.put("facebookToken", "facebookTest");
     ParseUser.State userState = new ParseUser.State.Builder()
@@ -1046,7 +1048,7 @@ public class ParseUserTest {
         .when(partialMockUser)
         .saveAsync(anyString(), Matchers.<Task<Void>>any());
 
-    ParseTaskUtils.wait(partialMockUser.unlinkFromAsync(provider));
+    ParseTaskUtils.wait(partialMockUser.unlinkFromAsync(authType));
 
     // Verify we delete authData
     assertNull(user.getAuthData().get("facebook"));

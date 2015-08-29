@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -49,6 +50,7 @@ public class CachedCurrentUserControllerTest {
   public void testSetAsyncWithOldInMemoryCurrentUser() throws Exception {
     // Mock currentUser in memory
     ParseUser oldCurrentUser = mock(ParseUser.class);
+    when(oldCurrentUser.logOutAsync(anyBoolean())).thenReturn(Task.<Void>forResult(null));
 
     ParseUser.State state = new ParseUser.State.Builder()
         .put("key", "value")
@@ -105,6 +107,7 @@ public class CachedCurrentUserControllerTest {
   public void testSetAsyncWithPersistFailure() throws Exception {
     // Mock currentUser in memory
     ParseUser oldCurrentUser = mock(ParseUser.class);
+    when(oldCurrentUser.logOutAsync(anyBoolean())).thenReturn(Task.<Void>forResult(null));
 
     ParseUser currentUser = new ParseUser();
     ParseObjectStore<ParseUser> store =
@@ -156,6 +159,7 @@ public class CachedCurrentUserControllerTest {
 
     CachedCurrentUserController controller =
         new CachedCurrentUserController(store);
+    ParseCorePlugins.getInstance().registerCurrentUserController(controller);
     // CurrentUser is null but currentUserMatchesDisk is true happens when a user logout
     controller.currentUserMatchesDisk = true;
 

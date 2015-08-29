@@ -299,6 +299,14 @@ import java.util.concurrent.atomic.AtomicReference;
     return authenticationController.get();
   }
 
+  public void registerAuthenticationManager(ParseAuthenticationManager manager) {
+    if (!authenticationController.compareAndSet(null, manager)) {
+      throw new IllegalStateException(
+          "Another authentication manager was already registered: " +
+              authenticationController.get());
+    }
+  }
+
   public ParseDefaultACLController getDefaultACLController() {
     if (defaultACLController.get() == null) {
       ParseDefaultACLController controller = new ParseDefaultACLController();

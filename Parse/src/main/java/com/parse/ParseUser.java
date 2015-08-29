@@ -1093,11 +1093,7 @@ public class ParseUser extends ParseObject {
     }
   }
 
-  /* package */ Task<Void> unlinkFromAsync(ParseAuthenticationProvider provider) {
-    return unlinkFromAsync(provider.getAuthType());
-  }
-
-  private Task<Void> unlinkFromAsync(final String authType) {
+  /* package */ Task<Void> unlinkFromAsync(final String authType) {
     synchronized (mutex) {
       if (authType == null) {
         return Task.forResult(null);
