@@ -1119,6 +1119,10 @@ public class ParseUser extends ParseObject {
 
   /* package */ static Task<ParseUser> logInWithAsync(
       final String authType, final Map<String, String> authData) {
+    if (authType == null) {
+      throw new IllegalArgumentException("Invalid authType: " + null);
+    }
+
     final Continuation<Void, Task<ParseUser>> logInWithTask = new Continuation<Void, Task<ParseUser>>() {
       @Override
       public Task<ParseUser> then(Task<Void> task) throws Exception {
@@ -1254,6 +1258,9 @@ public class ParseUser extends ParseObject {
 
   /* package */ Task<Void> linkWithAsync(
       String authType, Map<String, String> authData) {
+    if (authType == null) {
+      throw new IllegalArgumentException("Invalid authType: " + null);
+    }
     return linkWithAsync(authType, authData, getSessionToken());
   }
 

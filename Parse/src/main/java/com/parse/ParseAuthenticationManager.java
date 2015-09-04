@@ -26,6 +26,10 @@ import bolts.Task;
 
   public void register(ParseAuthenticationProvider provider) {
     final String authType = provider.getAuthType();
+    if (authType == null) {
+      throw new IllegalArgumentException("Invalid authType: " + null);
+    }
+
     synchronized (lock) {
       if (authenticationProviders.containsKey(authType)) {
         throw new IllegalStateException("Another " + authType + " provider was already registered: "
@@ -50,10 +54,6 @@ import bolts.Task;
         return null;
       }
     });
-  }
-
-  /* package for tests */ void unregister(ParseAuthenticationProvider provider) {
-
   }
 
   public boolean restoreAuthentication(String authType, Map<String, String> authData) {
