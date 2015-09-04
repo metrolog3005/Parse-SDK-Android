@@ -57,6 +57,7 @@ public class ParseAuthenticationManagerTest {
   @Test
   public void testRegisterAnonymous() {
     ParseAuthenticationProvider anonymous = mock(AnonymousAuthenticationProvider.class);
+    when(anonymous.getAuthType()).thenReturn("anonymous");
 
     manager.register(anonymous);
     verifyNoMoreInteractions(controller);
