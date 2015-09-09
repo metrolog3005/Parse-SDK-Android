@@ -11,6 +11,7 @@ package com.parse;
 import android.net.SSLCertificateSocketFactory;
 import android.net.SSLSessionCache;
 
+import com.facebook.stetho.okhttp.StethoInterceptor;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
@@ -54,7 +55,9 @@ import okio.Okio;
     okHttpClient.setFollowRedirects(false);
 
     okHttpClient.setSslSocketFactory(SSLCertificateSocketFactory.getDefault(
-        socketOperationTimeout, sslSessionCache));
+            socketOperationTimeout, sslSessionCache));
+
+    okHttpClient.networkInterceptors().add(new StethoInterceptor());
   }
 
   @Override
